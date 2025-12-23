@@ -1,9 +1,13 @@
 <script>
   export let node;
+  export let searchExpand = false;
+
   let expanded = false;
 
-  function toggle(ev) {
-    ev.stopPropagation();
+  $: if (searchExpand) expanded = true;
+
+  function toggle(e) {
+    e.stopPropagation();
     expanded = !expanded;
   }
 
@@ -13,26 +17,27 @@
   });
 </script>
 
-<li>
-  <div class="node" on:click={toggle}>
-    <span class="toggle">
-      {#if node.children && node.children.length}
-        {expanded ? "-" : "+"}
-      {:else}
-        -
-      {/if}
+<li class="tree-node">
+  <button
+    class="node"
+    class:node-hover={node.children?.length}
+    on:click={toggle}
+  >
+    {#if node.children && node.children.length}
+      {expanded ? "-" : "+"}
+    {:else}
+      -
+    {/if}
+    <span class="label">
+      {node.name}
+      <small>{formatterUSD.format(node.subtotal_revenue)}</small>
     </span>
-    <span
-      >{node.name}
-      <small>{formatterUSD.format(node.subtotal_revenue)}</small></span
-    >
-  </div>
+  </button>
 
-  {#if expanded && node.children && node.children.length}
+  {#if expanded && node.children?.length}
     <ul>
       {#each node.children as child (child.id)}
-        <!-- recursive render of the same component -->
-        <svelte:self node={child} />
+        <svelte:self node={child} {searchExpand} />
       {/each}
     </ul>
   {/if}
@@ -41,22 +46,68 @@
 <style>
   ul {
     list-style: none;
-    padding-left: 1rem;
     margin: 0;
+    padding-left: 1.5rem;
+    position: relative;
   }
-  li {
-    list-style: none;
-    margin: 4px 0;
+
+  .tree-node {
+    position: relative;
+    padding-left: 1rem;
   }
+
+  /* vertical line */
+  .tree-node::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 100%;
+    background: #ccc;
+  }
+
+  /* horizontal connector */
+  .tree-node::after {
+    content: "";
+    position: absolute;
+    top: 1.1rem;
+    left: 0;
+    width: 1rem;
+    height: 1px;
+    background: #ccc;
+  }
+
+  /* remove line for last child */
+  .tree-node:last-child::before {
+    height: 1.1rem;
+  }
+
   .node {
-    display: flex;
-    align-items: center;
     cursor: pointer;
-    user-select: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    text-align: left;
+    width: 100%;
+    background: transparent;
+    outline: none;
   }
-  .toggle {
-    width: 1.2em;
-    display: inline-block;
-    text-align: center;
+
+  .node:hover {
+    outline: none;
+    border: 0;
+  }
+
+  .node-hover:hover {
+    background: #f5f5f5;
+    color: #242424;
+    outline: none;
+    border: 0;
+  }
+
+  .label small {
+    margin-left: 6px;
+    color: #666;
+    font-size: 0.8em;
   }
 </style>
